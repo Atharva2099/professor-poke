@@ -1,0 +1,32 @@
+# Data stays local until each source's redistribution terms are checked
+data/
+
+# Cloud state never belongs here (the operating pack lives in ~/Desktop/gcp-workspace/)
+gcp-workspace/
+*gcp*/
+*.tfstate
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+
+# Large artifacts
+*.npz
+*.npy
+*.pt
+*.safetensors
+*.bin
+*.jsonl.gz
+activations/
+checkpoints/
+
+# Python / tooling
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
