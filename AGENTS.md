@@ -10,41 +10,45 @@ This repo is public. Read section 6 before writing any file.
 
 ## 1. What this repo is for
 
-The question: **do language models encode which way a political statement leans, in a form that carries across languages?**
+The question: **what do Pokémon battle agents know internally, and do they use it?**
 
-The previous attempt (Manifesto Project RILE data, in `~/Desktop/Projects/AI safety`) produced weeks of careful analysis on statements and labels the owner could not read or trust. Read `docs/lessons-from-rile.md` before proposing any dataset or experiment.
+We study existing trained agents (Metamon, UT Austin) instead of training our own. Each turn the agent sees raw facts (names, types, base stats, base power), never computed results like type effectiveness or damage. So anything it "knows" beyond that, it worked out itself.
+
+First targets:
+
+1. **Type chart.** Does the agent compute type effectiveness internally, how closely does it match the real 18×18 chart, and does editing it change move choice?
+2. **Opponent-team memory.** Does the agent remember opponent Pokémon it has seen but that are no longer on the field?
+
+The previous attempt (cross-lingual political probing) failed because its labels were opinions. Read `docs/lessons-from-rile.md` first.
 
 Priorities, in order:
 
 1. **The owner understands the work** well enough to discuss it with working researchers.
-2. **The data is right.** See section 2.
+2. **Every claim is backed by evidence a sceptic would accept.** See section 2.
 3. Outreach to researchers with specific questions.
-4. A blog post or preprint only if it falls out naturally. Do not optimize for it.
+4. A LessWrong post or preprint once a claim is conclusive. A clear negative result counts.
 
-## 2. Data first (the main rule)
+## 2. Evidence first (the main rule)
 
-Data is the hardest bar in this repo. No probing, model runs, or GPU work until the owner has signed off on the dataset.
+No large runs and no claims until each step passes, with an owner check before the next step starts.
 
-Stages, each with a human check before the next starts:
+1. **Behaviour test.** Before looking inside, check that the agent acts on the concept (for example, it picks super-effective moves far above chance). If it doesn't, there is nothing to probe.
+2. **Input check.** Confirm from the code that the concept is not given to the agent directly. If it is, a probe proves nothing.
+3. **Labels from the simulator.** Every label comes from exact game rules or the battle simulator's full state, never from human judgement or guessed data. Human replays only partly reveal teams; don't use them for hidden-information labels.
+4. **Small probe with baselines.** On a few hundred examples, compare the trained agent against: an untrained copy of the same model, a probe on the raw inputs, and the same probe trained on shuffled labels (control task). If any baseline matches the trained agent, stop.
+5. **Confounds.** Check the label is not predictable from something simpler (move identity, species, turn number). Use matched comparisons.
+6. **Causal test before any claim.** Edit or remove the internal signal and check behaviour changes as predicted. Without this, report information as "present", never as "used".
+7. **Replicate** on at least one other checkpoint or seed.
 
-1. **Sources.** Prefer official transcripts (debates, Hansard, Congressional Record, Lok Sabha) over speeches, and speeches over pundit transcripts. Every item keeps its source URL, date, speaker, and exact location in the source.
-2. **Extraction.** One item is one claim, verbatim. **An item must make sense read on its own.** If it needs the previous sentence, skip it.
-3. **Curation.** Balance positions within each topic. Many speakers, with a per-speaker cap.
-4. **Proofreading.** Check each item word for word against the source. Remove transcription errors, list markers, and symbol junk.
-5. **Labelling.** Label each item as a position on a concrete proposition (for example, "The government should reduce immigration": agree / disagree / neither), not as left or right. Mapping positions to left/right is separate, per-country metadata. Two people label independently without seeing the speaker. Items they disagree on are dropped, not forced. The owner sets the minimum agreement before labelling starts.
-6. **Translation, later.** Prefer real native-language statements over translations. Anything translated is back-translated and checked by someone who reads that language. Only languages someone on the project can actually read.
-
-Pilot every stage on a small batch (for example, one debate) before scaling.
-
-Things that broke the last dataset, which must not come back: labels decided by a category code instead of what the sentence says; sentence fragments; topic that predicts the label; tone or negation that predicts the label. Every experiment needs baselines for these.
+Pilot every step on a tiny batch first. Before each experiment, write down what result would count as yes, no, or inconclusive.
 
 ## 3. How to work with the owner
 
 ### Teach, don't ship, and chunk the code
 
 - Never drop a large end-to-end pipeline. One concept, one small chunk (tens of lines), the owner runs it, discuss what they saw, then the next chunk.
-- Boilerplate (imports, argparse, file I/O) can be written quickly. Conceptual code (labelling logic, probes, baselines, metrics) is chunked and explained before it runs.
-- Prefer questions on conceptual pieces: "What do you expect if we remove the topic words?"
+- Boilerplate (imports, argparse, file I/O) can be written quickly. Conceptual code (label generation, probes, baselines, metrics) is chunked and explained before it runs.
+- Prefer questions on conceptual pieces: "What do you expect a probe to find on an untrained copy of the model?"
 
 ### Approval
 
@@ -103,6 +107,8 @@ For long detached runs, do not poll unless asked.
 
 Public figures' public statements are fine to store with their source. Redistribution terms of each source must be checked before its text is committed; until checked, keep it under the ignored `data/` folder.
 
+Metamon code, weights, and datasets each have their own licence. Check the licence of each before committing any battle data, logs, or derived activations; until checked, keep them under `data/`.
+
 ## 7. Google Cloud
 
 The GCP operating pack lives **outside this repo** at `~/Desktop/gcp-workspace/`, shared with the old repo. It is never copied into this repo.
@@ -132,15 +138,15 @@ After every verified operation: update `workspace_state.md`, append one JSON rec
 ```
 .
 ├── AGENTS.md
-├── docs/            # lessons, data spec, labelling guide, bugs-squashed, writeups
-├── data/            # git-ignored until each source's licence is checked
+├── docs/            # lessons, experiment notes, bugs-squashed, writeups
+├── data/            # git-ignored: battles, activations, labels until licences are checked
 └── src/             # small scripts
 ```
 
 ## 9. TL;DR
 
-1. Data first. No model work until the owner signs off on the data.
-2. Items must make sense on their own; labels are positions on propositions, checked by two people.
+1. Evidence first: behaviour test, input check, baselines, causal test, then a claim.
+2. Labels come from the simulator or exact game rules, never from guesses.
 3. Teach in small chunks. Ask before changing anything.
-4. Public repo: no cloud IDs, credentials, or restricted text.
+4. Public repo: no cloud IDs, credentials, or unlicensed data.
 5. Read `~/Desktop/gcp-workspace/SKILL.md` before any cloud action.

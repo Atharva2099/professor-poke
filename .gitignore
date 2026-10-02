@@ -30,3 +30,10 @@ __pycache__/
 *.pyc
 .DS_Store
 .ipynb_checkpoints/
+
+# Pokémon Showdown server / Node
+node_modules/
+pokemon-showdown/
+
+# Local session file
+.claude_session
